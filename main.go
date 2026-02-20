@@ -4,30 +4,32 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"time"
+//	"os"
+//	"time"
 )
 
 func main() {
 	m := http.NewServeMux()
 
-	m.HandleFunc("/", handlePage)
+	// m.HandleFunc("/", handlePage)
 
-	port := os.Getenv("PORT")
+	// port := os.Getenv("PORT")
+	// port := "8080"
 	srv := http.Server{
 		Handler:      m,
-		Addr:         ":" + port,
-		WriteTimeout: 30 * time.Second,
-		ReadTimeout:  30 * time.Second,
+		Addr:         ":8080",
+		// WriteTimeout: 30 * time.Second,
+		// ReadTimeout:  30 * time.Second,
 	}
 
 	// this blocks forever, until the server
 	// has an unrecoverable error
-	fmt.Println("server started on ", port)
+	fmt.Println("server started on :8080")
 	err := srv.ListenAndServe()
 	log.Fatal(err)
 }
 
+/*
 func handlePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(200)
@@ -40,3 +42,4 @@ func handlePage(w http.ResponseWriter, r *http.Request) {
 `
 	w.Write([]byte(page))
 }
+*/
