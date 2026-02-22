@@ -12,7 +12,8 @@ func main() {
 	m := http.NewServeMux()
 
 	serverRoot := os.Getenv("GOSERVER_ROOT")
-	m.Handle("/", http.FileServer(http.Dir(serverRoot)))
+	m.Handle("/app/", http.StripPrefix("/app/", http.FileServer(http.Dir(serverRoot))))
+	m.HandleFunc("/healthz", handleHealthEndpoint)
 
 	port := os.Getenv("GOSERVER_PORT")
 	srv := http.Server{
@@ -24,22 +25,14 @@ func main() {
 
 	// this blocks forever, until the server
 	// has an unrecoverable error
-	fmt.Printf("server started on %s\n", port)
+	fmt.Printf("server started on %s\n", srv.Addr)
 	err := srv.ListenAndServe()
 	log.Fatal(err)
 }
 
-/*
-func handlePage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
+func handleHealthEndpoint(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
-	const page = `<html>
-<head></head>
-<body>
-	<p>Welcome to Chirpy</p>
-</body>
-</html>
-`
+	const page = `OK`
 	w.Write([]byte(page))
 }
-*/
