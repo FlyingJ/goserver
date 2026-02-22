@@ -4,21 +4,20 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-//	"os"
+	"os"
 //	"time"
 )
 
 func main() {
 	m := http.NewServeMux()
 
-	serverRoot := "./public"
+	serverRoot := os.Getenv("GOSERVER_ROOT")
 	m.Handle("/", http.FileServer(http.Dir(serverRoot)))
 
-	// port := os.Getenv("PORT")
-	port := ":8080"
+	port := os.Getenv("GOSERVER_PORT")
 	srv := http.Server{
 		Handler:      m,
-		Addr:         port,
+		Addr:         ":" + port,
 		// WriteTimeout: 30 * time.Second,
 		// ReadTimeout:  30 * time.Second,
 	}
