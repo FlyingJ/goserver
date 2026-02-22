@@ -32,5 +32,8 @@ go.work.sum
 # .vscode/
 *.sublime-*
 
+# a place to put stuff you want to ignore
+raw/
+
 # build artifacts
 goserver
