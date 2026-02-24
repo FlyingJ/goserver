@@ -1,11 +1,12 @@
 package main
 
 import (
-	"sync/atomic"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+//	"sync"
+	"sync/atomic"
 //	"time"
 )
 
@@ -14,8 +15,10 @@ type apiConfig struct {
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
-	cfg.fileserverHits.Add(1)
-	return next
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cfg.fileserverHits.Add(1)
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (cfg *apiConfig) handleMetricEndpoint(w http.ResponseWriter, r *http.Request) {
@@ -30,8 +33,7 @@ func (cfg *apiConfig) handleResetEndpoint(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(200)
 	cfg.fileserverHits.Store(0)
-	hits := cfg.fileserverHits.Load()
-	page := fmt.Sprintf("Hits reset to %d", hits)
+	page := fmt.Sprintf("Hits reset to %d", cfg.fileserverHits.Load())
 	w.Write([]byte(page))
 }
 
@@ -44,7 +46,9 @@ func handleHealthEndpoint(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	serveMux := http.NewServeMux()
-	var apiCfg apiConfig
+	apiCfg := apiConfig{
+
+	}
 
 	serverRoot := os.Getenv("GOSERVER_ROOT")
 	serveMux.Handle(
@@ -59,15 +63,15 @@ func main() {
 		),
 	)
 	serveMux.HandleFunc(
-		"/healthz",
+		"GET /healthz",
 		handleHealthEndpoint,
 	)
 	serveMux.HandleFunc(
-		"/metrics",
+		"GET /metrics",
 		apiCfg.handleMetricEndpoint,
 	)
 	serveMux.HandleFunc(
-		"/reset",
+		"POST /reset",
 		apiCfg.handleResetEndpoint,
 	)
 
