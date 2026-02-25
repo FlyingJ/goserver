@@ -22,10 +22,10 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 }
 
 func (cfg *apiConfig) handleMetricEndpoint(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(200)
 	hits := cfg.fileserverHits.Load()
-	page := fmt.Sprintf("Hits: %d", hits)
+	page := fmt.Sprintf("<html>\n  <body>\n    <h1>Welcome, Chirpy Admin</h1>\n    <p>Chirpy has been visited %d times!</p>\n  </body>\n</html>", hits)
 	w.Write([]byte(page))
 }
 
@@ -63,15 +63,15 @@ func main() {
 		),
 	)
 	serveMux.HandleFunc(
-		"GET /healthz",
+		"GET /api/healthz",
 		handleHealthEndpoint,
 	)
 	serveMux.HandleFunc(
-		"GET /metrics",
+		"GET /admin/metrics",
 		apiCfg.handleMetricEndpoint,
 	)
 	serveMux.HandleFunc(
-		"POST /reset",
+		"POST /admin/reset",
 		apiCfg.handleResetEndpoint,
 	)
 
