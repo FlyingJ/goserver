@@ -25,7 +25,12 @@ func (cfg *apiConfig) handleMetricEndpoint(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(200)
 	hits := cfg.fileserverHits.Load()
-	page := fmt.Sprintf("<html>\n  <body>\n    <h1>Welcome, Chirpy Admin</h1>\n    <p>Chirpy has been visited %d times!</p>\n  </body>\n</html>", hits)
+	page := fmt.Sprintf(`<html>
+  <body>
+    <h1>Welcome, Chirpy Admin</h1>
+    <p>Chirpy has been visited %d times!</p>
+  </body>
+</html>`, hits)
 	w.Write([]byte(page))
 }
 
