@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,6 +11,86 @@ import (
 //	"time"
 )
 
+// api API
+// /healthz
+func handleHealthEndpoint(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(200)
+	const page = `OK`
+	w.Write([]byte(page))
+}
+// /validate_chirp
+// ensure chirp is 140 characters or less
+func handleValidateChirpEndpoint(w http.ResponseWriter, r *http.Request) {
+	const maxChirpLength = 140
+	// expected request payload structure
+	type payload struct {
+		body string `json:"body"`
+	}
+	// response payload structures
+	type responseBody interface {
+		doJSONMarshal() ([]byte, error)
+	}
+
+	type errorResponseBody struct {
+		body string `json:"error"`
+	}
+
+	func (e *errorResponseBody) doJSONMarshal() ([]byte, error) {
+		return json.Marshal(e)
+	}
+
+	type successResponseBody struct {
+		body bool `json:"valid"`
+	}
+
+	func (s *successResponseBody) doJSONMarshal() ([]byte, error) {
+		return json.Marshal(s)
+	}
+	
+	var chirp payload
+	var dat []byte
+	var err error
+	var respBody responseBody
+
+	statusCode := 200
+	// are we dealing with a chirp?
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&chirp)
+	if err != nil {
+		statusCode = 400
+		respBody = errorResponseBody{
+			body: fmt.Sprintf("unable to decode request data"),
+		}
+	} else {
+		// we have a chirp,	is it too long?
+		if len(chirp.Body) > maxChirpLength {
+		  statusCode = 400
+		  respBody = errorResponseBody{
+			  body: fmt.Sprintf("Chirp is too long"),
+		  }
+	  } else {
+		  statusCode = 200
+		  respBody = successResponseBody{
+			  body: true,
+		  }
+	  }
+	}
+	dat, err = respBody.doJSONMarshal()
+	if err != nil {
+		log.Printf("Error: unable to marshal JSON: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	// made it here so we haven't had a server error yet
+	// if it fits it ships
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	w.Write(dat)
+}
+
+// putting a counter on the /app requests
+// then assembling tools to deal with the counter
 type apiConfig struct {
 	fileserverHits atomic.Int32
 }
@@ -20,7 +101,7 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
+// /metrics
 func (cfg *apiConfig) handleMetricEndpoint(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(200)
@@ -33,19 +114,12 @@ func (cfg *apiConfig) handleMetricEndpoint(w http.ResponseWriter, r *http.Reques
 </html>`, hits)
 	w.Write([]byte(page))
 }
-
+// /reset
 func (cfg *apiConfig) handleResetEndpoint(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(200)
 	cfg.fileserverHits.Store(0)
 	page := fmt.Sprintf("Hits reset to %d", cfg.fileserverHits.Load())
-	w.Write([]byte(page))
-}
-
-func handleHealthEndpoint(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(200)
-	const page = `OK`
 	w.Write([]byte(page))
 }
 
@@ -70,6 +144,10 @@ func main() {
 	serveMux.HandleFunc(
 		"GET /api/healthz",
 		handleHealthEndpoint,
+	)
+	serveMux.HandleFunc(
+		"POST /api/validate_chirp",
+		handleValidateChirpEndpoint,
 	)
 	serveMux.HandleFunc(
 		"GET /admin/metrics",
