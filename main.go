@@ -64,13 +64,17 @@ func handleValidateChirpEndpoint(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "unable to decode request body", err)
 		return
 	}
+	if params == (parameters{}) {
+		respondWithError(w, http.StatusBadRequest, "empty payload", nil)
+		return
+	}
 	// we have a chirp,	is it too long?
 	const maxChirpLength = 140
 	if len(params.Body) > maxChirpLength {
 			respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
 			return
 	}
-	
+
 	respondWithJSON(w, http.StatusOK, returnVals{
 		Valid: true,
 	})
