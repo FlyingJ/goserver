@@ -20,35 +20,22 @@ func handleHealthEndpoint(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(page))
 }
 // /validate_chirp
-type responseBody interface {
-	doJSONMarshal() ([]byte, error)
-}
-
-type errorResponseBody struct {
-	body string `json:"error"`
-}
-
-func (e errorResponseBody) doJSONMarshal() ([]byte, error) {
-	return json.Marshal(e)
-}
-
-type successResponseBody struct {
-	body bool `json:"valid"`
-}
-
-func (s successResponseBody) doJSONMarshal() ([]byte, error) {
-	return json.Marshal(s)
-}
-
-func respondWithError(w http.ResponseWriter, code int, msg string) {
-	respBody := errorResponseBody{
-		body: msg,
+func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
+	if err != nil {
+		log.Println(err)
 	}
-	respondWithJSON(w, code, respBody)
+	if code > 499 {
+		log.Printf("Responding with 5XX error: %s", msg)
+	}
+	type errorResponse struct {
+		Error string `json:"error"`
+	}
+	respondWithJSON(w, code, errorResponse{Error: msg,})
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload responseBody) {
-	dat, err := payload.doJSONMarshal()
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	dat, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("Error: unable to marshal JSON: %s", err)
 		w.WriteHeader(500)
@@ -56,29 +43,37 @@ func respondWithJSON(w http.ResponseWriter, code int, payload responseBody) {
 	}
 	// made it here so we haven't had a server error yet
 	// if it fits it ships
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(dat)
 }
+
 // ensure chirp is 140 characters or less
 func handleValidateChirpEndpoint(w http.ResponseWriter, r *http.Request) {
-	const maxChirpLength = 140
-	var decoded struct {
-		body string `json:"body"`
+	type parameters struct {
+		Body string `json:"body"`
 	}
+	type returnVals struct {
+		Valid bool `json:"valid"`
+	}
+
 	// are we dealing with a chirp?
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&decoded)
+	params := parameters{}
+	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 400, "unable to decode request body")
-	} else {
-		// we have a chirp,	is it too long?
-		if len(decoded.body) > maxChirpLength {
-			respondWithError(w, 400, "Chirp is too long")
-	  } else {
-	  	respondWithJSON(w, 200, successResponseBody{body: true,})
-	  }
+		respondWithError(w, http.StatusInternalServerError, "unable to decode request body", err)
+		return
 	}
+	// we have a chirp,	is it too long?
+	const maxChirpLength = 140
+	if len(params.Body) > maxChirpLength {
+			respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
+			return
+	}
+	
+	respondWithJSON(w, http.StatusOK, returnVals{
+		Valid: true,
+	})
 }
 
 // putting a counter on the /app requests
