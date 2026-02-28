@@ -1,3 +1,3 @@
-module github.com/FlyingJ/goserver
+module goserver
 
 go 1.22.2
