@@ -18,6 +18,7 @@ func (cfg *APIConfig) MiddlewareMetricsIncrement(next http.Handler) http.Handler
 		next.ServeHTTP(w, r)
 	})
 }
+
 // /metrics
 func (cfg *APIConfig) HandleMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
