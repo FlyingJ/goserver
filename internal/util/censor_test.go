@@ -10,12 +10,20 @@ func TestCensor(t *testing.T) {
 		expectation string
 	}{
 		{
-			input:       "hello world",
+			input: "hello world",
 			expectation: "hello world",
 		},
 		{
-			input:       "hello you silly fornax",
+			input: "hello you silly fornax",
 			expectation: "hello you silly ****",
+		},
+		{
+			input: "",
+			expectation: "",
+		},
+		{
+			input: "Fornax!",
+			expectation: "Fornax!",
 		},
 	}
 	for _, c := range cases {
