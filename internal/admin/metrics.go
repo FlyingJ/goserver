@@ -4,12 +4,14 @@ import (
     "fmt"
     "net/http"
     "sync/atomic"
+    "github.com/FlyingJ/goserver/internal/database"
 )
 
 // putting a counter on the /app requests
 // then assembling tools to deal with the counter
 type APIConfig struct {
 	  fileserverHits atomic.Int32
+      DBQueries *database.Queries
 }
 
 func (cfg *APIConfig) MiddlewareMetricsIncrement(next http.Handler) http.Handler {
