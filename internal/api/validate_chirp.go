@@ -12,7 +12,7 @@ func HandleValidateChirp(w http.ResponseWriter, r *http.Request) {
 		Body string `json:"body"`
 	}
 	type returnVals struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}
 
 	// are we dealing with a chirp?
@@ -27,6 +27,7 @@ func HandleValidateChirp(w http.ResponseWriter, r *http.Request) {
 		util.RespondWithError(w, http.StatusBadRequest, "empty payload", nil)
 		return
 	}
+
 	// we have a chirp,	is it too long?
 	const maxChirpLength = 140
 	if len(params.Body) > maxChirpLength {
@@ -34,7 +35,6 @@ func HandleValidateChirp(w http.ResponseWriter, r *http.Request) {
 			return
 	}
 
-	util.RespondWithJSON(w, http.StatusOK, returnVals{
-		Valid: true,
-	})
+	// apply profanity filter and send result
+	util.RespondWithJSON(w, http.StatusOK, returnVals{CleanedBody: util.Censor(params.Body),})
 }
