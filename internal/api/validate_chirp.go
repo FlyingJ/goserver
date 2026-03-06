@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/FlyingJ/goserver/internal/constants"
 	"github.com/FlyingJ/goserver/internal/util"
 	"net/http"
 )
@@ -29,12 +30,12 @@ func HandleValidateChirp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// we have a chirp,	is it too long?
-	const maxChirpLength = 140
-	if len(params.Body) > maxChirpLength {
+	chirp := params.Body
+	if len(chirp) > constants.MaxChirpLength {
 			util.RespondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
 			return
 	}
 
 	// apply profanity filter and send result
-	util.RespondWithJSON(w, http.StatusOK, returnVals{CleanedBody: util.Censor(params.Body),})
+	util.RespondWithJSON(w, http.StatusOK, returnVals{CleanedBody: util.Censor(chirp),})
 }
