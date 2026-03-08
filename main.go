@@ -39,6 +39,10 @@ func main() {
 		api.HandleHealth,
 	)
 	serveMux.HandleFunc(
+		"POST /api/users",
+		api.HandleUsers,
+	)
+	serveMux.HandleFunc(
 		"POST /api/validate_chirp",
 		api.HandleValidateChirp,
 	)
