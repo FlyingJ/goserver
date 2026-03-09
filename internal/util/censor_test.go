@@ -1,7 +1,9 @@
-package util
+package util_test
 
 import (
 	"testing"
+
+	"github.com/FlyingJ/goserver/internal/util"
 )
 
 func TestCensor(t *testing.T) {
@@ -29,7 +31,7 @@ func TestCensor(t *testing.T) {
 	for _, c := range cases {
 		input := c.input
 		expectation := c.expectation
-		result := Censor(input)
+		result := util.Censor(input)
 		if result != expectation {
 			t.Errorf(
 				"Error: %s and %s do not match",
